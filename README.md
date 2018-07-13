@@ -4,8 +4,12 @@ This session will show you how to get started with Azure Container Service (AKS)
 one of the most powerful ways of running containerized applications in Azure.
 You'll learn how to set up a Kubernetes cluster using the Azure Cloud Shell and
 deploy a highly available and scalable web application with only a few commands.
-We'll then show how easy it is to scale up, reconfigure or update your
-application without any incurring any downtime to users.
+We'll then show how easy it is to install Grafana into your cluster using
+Helm and then scale it up. We will then connect Grafana to our Azure subscription
+and use to build some great dashboards from our Azure Analytics.
+
+_[Grafana](https://grafana.com/) is an open platform for beautiful analytics and monitoring and also
+provides an [Azure Monitoring](https://grafana.com/plugins/grafana-azure-monitor-datasource) plugin._
 
 **Daniel Scott-Raynsford**
 
@@ -19,15 +23,14 @@ _Continuous Delivery Practice Lead, IAG NZ_
 - [Prerequisite Knowledge](#prerequisite-knowledge)
 - [What You Will Learn](#what-you-will-learn)
 - [Part 1 - Opening a Cloud Shell](#part-1---opening-a-cloud-shell) - 5 min
-- [Part 2 - Create an Azure Container Service](#part-2---create-the-azure-container-service) - 5 min
+- [Part 2 - Create an Azure Container Service](#part-2---create-the-azure-container-service) - 30 min
+- [Part 2a - Configure Health Monitoring](#part-2a---configure-health-monitoring) - 5 min
 - [Introduction to Containers, Docker and Kubernetes](#introduction-to-containers,-docker-and-kubernetes) - 30 min
 - [Part 3 - Manage Cluster with Cloud Shell](#part-3---manage-cluster-with-cloud-shell) - 5 min
-- [Part 4 - Deploy your First Application](#part-4---deploy-your-first-application) - 10 min
-- [Part 5 - Scale out your First Application](#part-5---scale-out-your-first-application) - 10 min
-- [Part 6 - Editing a Deployed Application](#part-6---editing-a-deployed-application) - 15 min
-- [Part 7 - When Disaster Strikes](#part-7---when-disaster-strikes) - 5 min
-- [Part 8 - Using Helm](#part-8---using-helm) - 5 min
-- [Part 99 - Cleanup After the Workshop](#part-9---cleanup-after-the-workshop) - 5 min
+- [Part 4 - Configure Helm Tiller](#part-4---configure-helm-tiller) - 5 min
+- [Part 5 - Install Grafana using Helm](#part-5---install-grafana-using-helm) - 10 min
+- [Part 6 - Connect Grafana to Azure](#part-6---connect-grafana-to-azure) - 5 min
+- [Part 7 - Cleanup After the Workshop](#part-7---cleanup-after-the-workshop) - 5 min
 
 Estimated workshop time: 90 min
 Estimated Azure credit usage: USD 3.00 (as long as you delete
@@ -47,6 +50,8 @@ You'll learn the basics in the following skills:
 - Use the Azure CLI (`az`) to create and delete an Azure Container Service.
 - Use the Kubernetes tools (`kubectl`) to deploy and manage highly available
   container applications.
+- Use the Helm tool (`helm`) to deploy and manage a highly available Grafana
+  cluster and connect it
 
 ## What You Will Need
 
@@ -222,337 +227,22 @@ manually, but the `Azure CLI` in Cloud Shell provides a handy way to do this for
    kubectl get nodes
    ```
 
-## Part 4 - Deploy your First Application
-
-We are going to start by deploying a simple two-tier voting web application:
-
-![Your First Kubernetes App](images/firstdemoapplication.png "Your First Kubernetes App")
-
-This application will contain two _Deployments_:
-
-- **azure-vote-front** which will run a one or more _Pods_ hosting the
-  web application containers. This will run on Port 80. A load balancing
-  _Service_ will be configured to provide external access to the _Pods_.
-- **azure-vote-back** which will run a single Redis cache container. This
-  provides a cache so that the `azure-vote-front` end can share state data.
-  This will be exposed on Port 6379 and will only be able to be accessed
-  by the `azure-vote-front` _Pods_.
-
-![Voting Web Application](images/ourdeployedapplication.png "Voting Web Application")
-
-We will deploy this application by downloading the _Deployment_ file and
-applying to the cluster. This will start the cluster automatically deploying
-the application by downloading container images from the internet (Docker Hub)
-and creating containers from them.
-
-> Note: We could use a private container registry like Azure Container Registry
-> to pull the container images from if we had private container images we had
-> created.
-
-You can review the _Deployment_ file by [clicking here](src/azure-vote.yml).
-
-1. Download a Kubernetes _Deployment_ file for the demo app to your Cloud Shell:
-
-   ```bash
-   wget https://raw.githubusercontent.com/PlagueHO/AzureGlobalBootcamp2018/master/src/azure-vote.yml
-   ```
-
-1. Create the application by telling Kubernetes to create the _Deployments_
-   and _Services_ using the _Deployment_ file by running this command in the
-   Cloud Shell:
-
-   ```bash
-   kubectl create -f azure-vote.yml
-   ```
-
-1. Wait for the Kubernetes _Service_ to be started and become accessible
-   by running this command in the Cloud Shell:
-
-   ```bash
-   kubectl get service azure-vote-front --watch
-   ```
-
-   _This may take a few minutes for the application images to be downloaded
-   to the cluster and the application to be started up. Once the external IP
-   address appears then the application is up and ready for us to use:_
-
-   ![Wait for Kubernetes Demo App](images/waitforkubernetesdemoapp.png "Wait for Kubernetes Demo App")
-
-1. Once the _Service_ reports an `EXTERNAL-IP` <kbd>CTRL+C</kbd> to exit
-   watching.
-
-1. Copy the `EXTERNAL-IP` address of YOUR application into the browser and
-   your app should be shown:
-
-   ![Your First Kubernetes App](images/firstdemoapplication.png "Your First Kubernetes App")
-
-   Congratulations! You are now running your first Kubernetes application.
-
-   ![Congratulations](images/congratulations.png "Congratulations")
-
-1. Now let us look at the _Deployments_ on the Kubernetes cluster by
-   running this command in Cloud Shell:
-
-   ```bash
-   kubectl get deployments
-   ```
-
-   This shows the applications deployed to the cluster and the number of
-   replicas of each _Pod_:
-
-   ![First Demo Deployments](images/firstdemodeployments.png "First Demo Deployments")
-
-1. We can get a list of all the services running on the cluster by executing
-   this command in Cloud Shell:
-
-   ```bash
-   kubectl get services
-   ```
-
-   ![First Demo Services](images/firstdemoservices.png "First Demo Services")
-
-1. Finally, lets find out which nodes the _Pods_ are running on by
-   executing this command in Cloud Shell:
-
-   ```bash
-   kubectl get pods -o wide
-   ```
-
-   ![First Demo Pods](images/firstdemopods.png "First Demo Pods")
-
-   _This command enables us to see which _Pods_ are running on each
-   Kubernetes agent. Normally we wouldn't worry to much about this, but we
-   want to watch what happens **later** when we shut down one of our agents._
-
-## Part 5 - Scale up your First Application
-
-One of the awesome features of Kubernetes is how easy it is to scale up
-(or down) our _Pods_ so that more replicas of a container run in it.
-
-We can easily scale individual _Pods_ or configure autoscaling to let
-Kubernetes manage the scale of indivual _Pods_ based on the load.
-
-1. To scale the front end _Pod_ of our vote demo we can run the following
-   command in our Cloud Shell:
-
-   ```bash
-   kubectl scale deployment azure-vote-front --replicas=3
-   ```
-
-   ![First Demo Scaled Up](images/firstdemoscaledup.png "First Demo Scaled Up")
-
-1. Now have a look at the _Pods_ that are running on our agents
-   by executing this command in Cloud Shell:
-
-   ```bash
-   kubectl get pods -o wide
-   ```
-
-   ![First Demo Scaled Pods](images/firstdemoscaleduppods.png "First Demo Scaled Pods")
-
-1. Lets now set up the front end Pod to automatically scale between 2 and 5
-   containers when the containers run at 75% CPU utilization by executing
-   this command in our Cloud Shell:
-
-   ```bash
-   kubectl autoscale deployment azure-vote-front --min=2 --max=5 --cpu-percent=75
-   ```
-
-   ![First Demo Autoscaled](images/firstdemoautoscaled.png "First Demo Autoscaled")
-
-## Part 6 - Editing a Deployed Application
-
-Each _Deployment_ file that has been applied to a cluster is stored
-within the Cluster master as a file and can be modified to apply changes
-to the _Deployments_ and _Services_ in flight.
-This enables reconfiguring almost any aspect of the _Deployment_ file
-and have the changes applied to the _Deployments_ and _Services_ immediately.
-
-For example, if we wanted to update the container image version of the
-running containers to a new version then we could edit this file.
-So, we'll now update to V2 of our running app without any user disruption
-at all. This is the power of Kubernetes.
-
-1. First, describe all the _Deployments_ on the cluster by running
-   this command in Cloud Shell:
-
-   ```bash
-   kubectl describe deployments
-   ```
-
-1. To edit a _Deployment_ file, execute the following command in Cloud
-   Shell:
-
-   ```bash
-   kubectl edit -f azure-vote.yml
-   ```
-
-   ![First Demo Edit Deployment](images/firstdemoeditdeployment.png "First Demo Edit Deployment")
-
-   _This will open VIM to edit the file in Azure Cloud Shell, which if you're
-   not familiar with it might be a little bit tricky._
-
-1. Search for the text `azure-vote-front:v1` in by pressing <kbd>/</kbd> on
-   your keyboard and then entering `azure-vote-front:v1` and press
-   <kbd>enter</kbd>. This should locate the line that matches:
-
-   ```yaml
-   image: microsoft/azure-vote-front:v1
-   ```
-
-   ![First Demo Find Image](images/firstdemofindimage.png "First Demo Find Image")
-
-1. Press <kbd>i</kbd> to enter _insert text_ mode and change the image to v2:
-
-   ```yaml
-   image: microsoft/azure-vote-front:v2
-   ```
-
-   ![First Demo Update Image](images/firstdemoupdateimage.png "First Demo Update Image")
-
-1. Press <kbd>esc</kbd> to exit _insert text_ mode.
-
-1. Press <kbd>:</kbd> and then press <kbd>w</kbd> and then <kbd>enter</kbd>
-   to write the file.
-
-   ![First Demo Write Update](images/firstdemowriteupdate.png "First Demo Write Update")
-
-1. Press <kbd>:</kbd> and then press <kbd>q</kbd> and then <kbd>enter</kbd>
-   to quit VIM.
-
-> Alternately, if you get stuck with the VIM part, you can use this
-> simple command to set the image that the `front-vote-front` deployment
-> should run by executing this command in the Cloud Shell:
-> ```bash
-> kubectl set image deployment azure-vote-front azure-vote-front=microsoft/azure-vote-front:v2
-> ```
-
-   The changes to your Deployment will now be applied. A n  ew version of
-   the container image will be downloaded and new containers deployed using
-   it. As each running container is deployed the old version will be
-   terminated.
-
-   ![First Demo Update Progress](images/firstdemoupdateprogress.png "First Demo Update Progress")
-
-1. We can now watch the rolling deployment of our new application by running
-   this command in the Azure Cloud Shell:
-
-   ```bash
-   kubectl get pods -o wide --watch
-   ```
-
-1. Once all Pods report a status of `Running` press <kbd>CTRL+C</kbd> to
-   exit watching.
-
-   ![First Demo Update Complete](images/firstdemoupdatecomplete.png "First Demo Update Complete")
-
-1. Now head back over to your running application in the browser and
-   refresh the window to see the new version of your application
-   running:
-
-   ![First Demo V2 Running](images/firstdemoapplicationv2.png "First Demo V2 Running")
-
-1. You can redeploy the previous version image by running this
-   command in the Cloud Shell:
-
-   ```bash
-   kubectl set image deployment azure-vote-front azure-vote-front=microsoft/azure-vote-front:v1
-   ```
-
-## Part 7 - When Disaster Strikes
-
-So, what happens when disaster strikes and one of your Kubernetes agents
-(_Nodes_) goes down - or if you just need to take it out of the cluster to
-update it?
-
-This is where Kubernetes really shines - it will always make sure the desired
-number of replicas are running for each _Pod_ in your _Deployment_, no matter
-how many agents you have available.
-
-If a _Node_ becomes unresponsive for 5 minutes then Kubernetes will automatically
-evict it from the cluster and move all the running _Pods_ to another _Node_.
-This will keep your systems running and reliable if unexpected outages occur.
-
-If you're planning on performing maintainence on a _Nodes_ in your cluster
-then typically you'd want to _Drain_ the _Nodes_ first. This ensures there
-will be no service disruption. So let's see this in action.
-
-1. First have a look at the containers that are running on our _Nodes_
-   by executing this command in Cloud Shell:
-
-   ```bash
-   kubectl get pods -o wide
-   ```
-
-   You'll see that they're spread accross the two running _Nodes_.
-
-   ![High Availabiliy Pods](images/highavailabilitystartpods.png "High Availabiliy Pods")
-
-1. To make things a little bit easier we'll assign the name of
-   one of our _Nodes_ to a variable by running this command in
-   the Cloud Shell:
-
-   ```bash
-   nodename="k8s-agent-6a859ffc-1"
-   ```
-
-1. Now, lets _Drain_ one of the _Nodes_ by running this command in
-
-   ```bash
-   kubectl drain $nodename
-   ```
-
-   This stops new _Pods_ from being deployed to this _Node_, but
-   leaves the existing _Pods_ running on it.
-
-1. Lets simulate a complete failure of the _Node_ by shutting
-   down the VM:
-
-   Get the name of one of your _Nodes_ from the result of the
-   previous command and execute this command (changing the `--name` parameter
-   value to that of the _Node_ to stop):
-
-   ```bash
-   az vm stop --resource-group $name-rgp --name $nodename
-   ```
-
-1. It will take 5 minutes for the Kubernetes cluster to determine
-   that the _Node_ is no longer available. At this point it will
-   redeploy all the _Pods_ to the other running _Nodes_ and mark
-   the failed _Pods_ as status `Unknown`:
-
-   ![High Availabiliy Pods Unknown](images/highavailabilitypodsunknown.png "High Availabiliy Pods Unknown")
-
-1. We will now start the VM back up (changing the `--name` parameter
-   value to that of the _Node_ to start):
-
-   ```bash
-   az vm start --resource-group $name-rgp --name $nodename
-   ```
-
-1. A _Node_ that has been shutdown without removing it from the cluster
-   will result in a status of `SchedulingDisabled`. Before the Kubernetes
-   _Scheduler_ will start using it again we must _Uncordon_ the node
-
-   ```bash
-   kubectl uncordon $nodename
-   ```
-
-## Step 8 - Using Helm
-
-Helm is essential a package management system for Kubernetes. It makes
-locating and installing services into Kubernetes really easy. Helm
-uses Helm charts to define Kubernetes services. The Helm management
-tool is already installed in the Azure Cloud Shell, but can also be
-installed onto a client machine.
-
-1. Initialize helm by running the command:
-
-   ```bash
-   helm init
-   ```
-
-| To install the Helm Tiller with RBAC enabled into a specific namespace use:
+## Part 4 - Configure Helm Tiller
+
+Helm is essentially a package management system for Kubernetes. It makes
+locating and installing services in Kubernetes even easier as well as
+simplifying the updating and upgrading of deployed services.
+The Helm management tool is already installed in the Azure Cloud Shell,
+but can also be installed onto a client machine (Windows, MacOS and Linux).
+
+Normally, Helm can just be enabled and installed using `helm init`.
+However, this will install into the `default` Kubernetes _namespace_ which
+we can't enable role based access (RBAC) control on. The Grafana Helm chart
+requires RBAC so we'll need to create a new Kubernetes _namespace_ called
+`tiller-world` to install it into.
+
+1. Initialize the Helm Tiller with role based access control enabled into
+   a the `tiller-world` _namespace_ with:
 
    ```bash
    kubectl create namespace tiller-world
@@ -562,13 +252,114 @@ installed onto a client machine.
    helm init --service-account tiller --tiller-namespace tiller-world
    ```
 
-2. To install and run Grfana:
+### Part 5 - Install Grafana using Helm
+
+Next, we'll install an instance of Grafana into our cluster using Helm
+and then scale up the _replica set_ to run 2 _replicas_:
+
+1. To install and run Grfana:
 
    ```bash
-   helm install stable/grafana --tiller-namespace tiller-world --namespace tiller-world --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce"
+   helm install stable/grafana --tiller-namespace tiller-world --namespace tiller-world --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins=grafana-azure-monitor-datasource,grafana-kubernetes-app"
    ```
 
-## Step 99 - Cleanup After the Workshop
+2. Set a variable name from the name of the Grafana service that
+   was started by helm:
+
+   ```bash
+    serviceName="silly-mole-grafana"
+   ```
+
+3. Scale out the Grafana dashboard to two replicas:
+
+   ```bash
+   kubectl scale deployment --namespace tiller-world $serviceName --replicas=2
+   kubectl get pods --namespace tiller-world
+   ```
+
+4. To get IP Address of the Grafana server:
+
+   ```bash
+   kubectl get service --namespace tiller-world $serviceName -o jsonpath="{.status.loadBalancer.ingress[0].ip}"; echo
+   ```
+
+5. To get `admin` account password Grafana server:
+
+   ```bash
+   kubectl get secret --namespace tiller-world $serviceName -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+   ```
+
+6. Open the IP address from _step 4_ in a web browser and enter
+   the username `admin` and the password from _step 5_.
+
+   ![Login to Grafana](images/grafanalogin.png "Login to Grafana")
+
+### Part 6 - Connect Grafana to Azure
+
+Now that our Highly Available Grafana service is running in our AKS cluster
+we need to connect it to our Azure subscription. This will allow Grafana
+to ingest monitoring information from Azure.
+
+The Grafana _Azure Monitor_ datasource will require an Azure Service
+Principal details it can use to connect to Azure.
+
+1. To create a new Service Principal run the following commands in
+  the Azure Cloud Shell:
+
+   ```bash
+   clientKey="<set this to a long password>"
+   appName="GrafanaAzureMonitor"
+   az ad app create --display-name $appName --homepage "http://localhost/$appName" --identifier-uris "http://localhost/$appName"
+   appId=$(az ad app list --display-name $appName --query [].appId -o tsv)
+   az ad sp create-for-rbac --name $appId --password $clientKey
+   ```
+
+   ![Create Azure SP](images/azurecreatesp.png "Create Azure SP")
+
+2. You will need to record the following four values from the service
+   principal:
+
+   a. Subsription Id - can be found by running:
+
+      ```bash
+      az account list
+      ```
+
+   b. Tenant Id - returned as the `tenant` from the output in _Step 1_.
+   c. Client Id - returned as the `appId` from the output in _Step 1_.
+   d. Client Secret - set in the `clientKey` variable in _Step 1_.
+
+3. In Grafana, click the settings (cog) icon and then click `Add data
+   source`:
+
+   ![Add Datasource in Grafana](images/grafanaadddatasource.png "Add Datasource in Grafana")
+
+4. Set `Azure Monitor` as the _Type_:
+
+   ![Select Azure Monitor Datasource](images/grafananewdatasourceazuremonitor.png "Select Azure Monitor Datasource")
+
+5. Enter a _Name_ for the datasource and complete the `Azure Monitor API
+   Details` as per the values found in _Step 2_.
+
+   | Note: You don't need to complete the Application Insights details
+   | unless you have one you want to ingest information into.
+
+   ![New Azure Monitor Datasource](images/grafananewazuremonitordatasource.png "New Azure Monitor Datasource")
+
+6. Click the `Save & Test` button:
+
+   ![Azure Datasource Created](images/grafanadatasourcecreated.png "Azure Datasource Created")
+
+If everything has gone to plan, then you have now connected your Grafana
+service to Azure and you can now create dashboards with it.
+
+Now you're able to create some dashboards to monitor your services
+in Azure:
+
+If you're new to Grafana, then it is best to look through the Grafana
+[getting started guide](http://docs.grafana.org/guides/getting_started/).
+
+## Step 7 - Cleanup After the Workshop
 
 > This step is optional and only needs to be done if you're finished with your
 > cluster and want to get rid of it to save some Azure credit.
