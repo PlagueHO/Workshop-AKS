@@ -255,7 +255,9 @@ requires RBAC so we'll need to create a new Kubernetes _namespace_ called
 ### Part 5 - Install Grafana using Helm
 
 Next, we'll install an instance of Grafana into our cluster using Helm
-and then scale up the _replica set_ to run 2 _replicas_:
+and then scale up the _replica set_ to run 2 _replicas_. We need to pass
+some configuration information to Helm to tell it how to configure our
+Grafana service, such as the plugins to include.
 
 1. To install and run Grfana:
 
@@ -300,8 +302,9 @@ Now that our Highly Available Grafana service is running in our AKS cluster
 we need to connect it to our Azure subscription. This will allow Grafana
 to ingest monitoring information from Azure.
 
-The Grafana _Azure Monitor_ datasource will require an Azure Service
-Principal details it can use to connect to Azure.
+The Grafana [Azure Monitor](https://azure.microsoft.com/en-us/blog/monitor-azure-services-and-applications-using-grafana/)
+datasource will require an Azure Service Principal details it can use to
+connect to Azure.
 
 1. To create a new Service Principal run the following commands in
   the Azure Cloud Shell:
@@ -355,6 +358,8 @@ service to Azure and you can now create dashboards with it.
 
 Now you're able to create some dashboards to monitor your services
 in Azure:
+
+![My Azure Dashboard](images/grafanadatasourcecreated.png "My Azure Dashboard")
 
 If you're new to Grafana, then it is best to look through the Grafana
 [getting started guide](http://docs.grafana.org/guides/getting_started/).
