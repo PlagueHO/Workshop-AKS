@@ -359,7 +359,7 @@ service to Azure and you can now create dashboards with it.
 Now you're able to create some dashboards to monitor your services
 in Azure:
 
-![My Azure Dashboard](images/grafanadatasourcecreated.png "My Azure Dashboard")
+![My Azure Dashboard](images/grafanaazuredashboard.png "My Azure Dashboard")
 
 If you're new to Grafana, then it is best to look through the Grafana
 [getting started guide](http://docs.grafana.org/guides/getting_started/).
