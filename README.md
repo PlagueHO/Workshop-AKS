@@ -262,7 +262,7 @@ Grafana service, such as the plugins to include.
 1. To install and run Grfana:
 
    ```bash
-   helm install stable/grafana --tiller-namespace tiller-world --namespace tiller-world --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins=grafana-azure-monitor-datasource,grafana-kubernetes-app"
+   helm install stable/grafana --tiller-namespace tiller-world --namespace tiller-world --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins[0]=grafana-azure-monitor-datasource,plugins[1]=grafana-kubernetes-app"
    ```
 
 2. Set a variable name from the name of the Grafana service that
