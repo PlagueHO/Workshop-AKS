@@ -267,13 +267,6 @@ Grafana service, such as the plugins to include.
    serviceName="<the name of the Kubernetes service that was created>"
    ```
 
-1. Scale out the Grafana dashboard to two replicas:
-
-   ```bash
-   kubectl scale deployment $serviceName --replicas=2
-   kubectl get pods
-   ```
-
 1. To get IP Address of the Grafana server:
 
    ```bash
