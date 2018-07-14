@@ -1,4 +1,4 @@
-# Containerize Your World using Azure Kubernetes Services
+# Running Grafana in Azure Kubernetes Service
 
 This session will show you how to get started with Azure Container Service (AKS),
 one of the most powerful ways of running containerized applications in Azure.
