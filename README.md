@@ -238,26 +238,12 @@ we can't enable role based access (RBAC) control on. The Grafana Helm chart
 requires RBAC so we'll need to create a new Kubernetes _namespace_ called
 `tiller-world` to install it into.
 
-| Important: as of 2018-07-14, there is an issue with the way Azure deploys
-an AKS cluster with RBAC enabled. It is missing the `cluster-admin` role
-which _Helm_ assumes exists. To resolve this issue, create the `cluster-admin`
-role by running:
-
-   ```bash
-   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/cluster-admin.yaml
-   ```
-
 1. Initialize the Helm Tiller with role based access control enabled into
    a the `tiller-world` _namespace_ with:
 
    ```bash
-   kubectl create serviceaccount tiller --namespace kube-system
-   kubectl create namespace tiller-world
-   kubectl create serviceaccount tiller --namespace tiller-world
-   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/role-tiller.yaml
-   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/rolebinding-tiller.yaml
    kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/cluster-rbac.yaml
-   helm init --service-account tiller --tiller-namespace tiller-world
+   helm init --service-account tiller
    ```
 
 ### Part 5 - Install Grafana using Helm
@@ -270,7 +256,7 @@ Grafana service, such as the plugins to include.
 1. To install and run Grfana:
 
    ```bash
-   helm install stable/grafana --tiller-namespace tiller-world --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins[0]=grafana-azure-monitor-datasource,plugins[1]=grafana-kubernetes-app"
+   helm install stable/grafana --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins=grafana-azure-monitor-datasource"
    ```
 
 2. Set a variable name from the name of the Grafana service that
@@ -283,20 +269,20 @@ Grafana service, such as the plugins to include.
 3. Scale out the Grafana dashboard to two replicas:
 
    ```bash
-   kubectl scale deployment --namespace tiller-world $serviceName --replicas=2
-   kubectl get pods --namespace tiller-world
+   kubectl scale deployment $serviceName --replicas=2
+   kubectl get pods
    ```
 
 4. To get IP Address of the Grafana server:
 
    ```bash
-   kubectl get service --namespace tiller-world $serviceName -o jsonpath="{.status.loadBalancer.ingress[0].ip}"; echo
+   kubectl get service $serviceName -o jsonpath="{.status.loadBalancer.ingress[0].ip}"; echo
    ```
 
 5. To get `admin` account password Grafana server:
 
    ```bash
-   kubectl get secret --namespace tiller-world $serviceName -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
+   kubectl get secret $serviceName -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
    ```
 
 6. Open the IP address from _step 4_ in a web browser and enter
@@ -384,7 +370,7 @@ Adding another workload to an existing cluster is simple with Helm.
 1. Add a Wordpress Application to your cluster:
 
    ```bash
-   helm install stable/wordpress --tiller-namespace tiller-world
+   helm install stable/wordpress
    ```
 
 ## Part 8 - Cleanup After the Workshop
