@@ -29,6 +29,7 @@ _Continuous Delivery Practice Lead, IAG NZ_
 - [Part 4 - Configure Helm Tiller](#part-4---configure-helm-tiller) - 5 min
 - [Part 5 - Install Grafana using Helm](#part-5---install-grafana-using-helm) - 10 min
 - [Part 6 - Connect Grafana to Azure](#part-6---connect-grafana-to-azure) - 5 min
+- [Part 7 - Add Some More Workloads](#part-7---add-some-more-workloads) - 5 min
 - [Part 8 - Cleanup After the Workshop](#part-8---cleanup-after-the-workshop) - 5 min
 
 Estimated workshop time: 90 min
@@ -50,7 +51,7 @@ You'll learn the basics in the following skills:
 - Use the Kubernetes tools (`kubectl`) to deploy and manage highly available
   container applications.
 - Use the Helm tool (`helm`) to deploy and manage a highly available Grafana
-  cluster and connect it
+  cluster and connect it to monitor an Azure VM.
 
 ## What You Will Need
 
@@ -256,36 +257,36 @@ Grafana service, such as the plugins to include.
 1. To install and run Grfana:
 
    ```bash
-   helm install stable/grafana --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins=grafana-azure-monitor-datasource"
+   helm install stable/grafana --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins=grafana-azure-monitor-datasource\,grafana-kubernetes-app"
    ```
 
-2. Set a variable name from the name of the Grafana service that
+1. Set a variable name from the name of the Grafana service that
    was started by helm:
 
    ```bash
-    serviceName="silly-mole-grafana"
+   serviceName="<the name of the Kubernetes service that was created>"
    ```
 
-3. Scale out the Grafana dashboard to two replicas:
+1. Scale out the Grafana dashboard to two replicas:
 
    ```bash
    kubectl scale deployment $serviceName --replicas=2
    kubectl get pods
    ```
 
-4. To get IP Address of the Grafana server:
+1. To get IP Address of the Grafana server:
 
    ```bash
    kubectl get service $serviceName -o jsonpath="{.status.loadBalancer.ingress[0].ip}"; echo
    ```
 
-5. To get `admin` account password Grafana server:
+1. To get `admin` account password Grafana server:
 
    ```bash
    kubectl get secret $serviceName -o jsonpath="{.data.admin-password}" | base64 --decode ; echo
    ```
 
-6. Open the IP address from _step 4_ in a web browser and enter
+1. Open the IP address from _step 4_ in a web browser and enter
    the username `admin` and the password from _step 5_.
 
    ![Login to Grafana](images/grafanalogin.png "Login to Grafana")
@@ -313,7 +314,7 @@ connect to Azure.
 
    ![Create Azure SP](images/azurecreatesp.png "Create Azure SP")
 
-2. You will need to record the following four values from the service
+1. You will need to record the following four values from the service
    principal:
 
    a. Subsription Id - can be found by running:
@@ -326,16 +327,16 @@ connect to Azure.
    c. Client Id - returned as the `appId` from the output in _Step 1_.
    d. Client Secret - set in the `clientKey` variable in _Step 1_.
 
-3. In Grafana, click the settings (cog) icon and then click `Add data
+1. In Grafana, click the settings (cog) icon and then click `Add data
    source`:
 
    ![Add Datasource in Grafana](images/grafanaadddatasource.png "Add Datasource in Grafana")
 
-4. Set `Azure Monitor` as the _Type_:
+1. Set `Azure Monitor` as the _Type_:
 
    ![Select Azure Monitor Datasource](images/grafananewdatasourceazuremonitor.png "Select Azure Monitor Datasource")
 
-5. Enter a _Name_ for the datasource and complete the `Azure Monitor API
+1. Enter a _Name_ for the datasource and complete the `Azure Monitor API
    Details` as per the values found in _Step 2_.
 
    | Note: You don't need to complete the Application Insights details
@@ -343,7 +344,7 @@ connect to Azure.
 
    ![New Azure Monitor Datasource](images/grafananewazuremonitordatasource.png "New Azure Monitor Datasource")
 
-6. Click the `Save & Test` button:
+1. Click the `Save & Test` button:
 
    ![Azure Datasource Created](images/grafanadatasourcecreated.png "Azure Datasource Created")
 
@@ -367,10 +368,16 @@ you can continue to add _Nodes_ if you start to run low on capacity.
 
 Adding another workload to an existing cluster is simple with Helm.
 
-1. Add a Wordpress Application to your cluster:
+1. Add a Wordpress Application instance to your cluster:
 
    ```bash
    helm install stable/wordpress
+   ```
+
+1. Add a Redmine (Project Management) Application to your cluster:
+
+   ```bash
+   helm install stable/redmine
    ```
 
 ## Part 8 - Cleanup After the Workshop
