@@ -251,10 +251,12 @@ role by running:
    a the `tiller-world` _namespace_ with:
 
    ```bash
+   kubectl create serviceaccount tiller --namespace kube-system
    kubectl create namespace tiller-world
    kubectl create serviceaccount tiller --namespace tiller-world
    kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/role-tiller.yaml
    kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/rolebinding-tiller.yaml
+   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/cluster-rbac.yaml
    helm init --service-account tiller --tiller-namespace tiller-world
    ```
 
