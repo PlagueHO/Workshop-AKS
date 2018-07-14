@@ -131,11 +131,16 @@ able to use to access your containers and manage your cluster.
    the public URLs of your cluster.
 
 1. Run this command in Cloud Shell, but change `<set me please>` to the
-   **name** that you specified above.
+   **name** that you specified above. You can also change the `location`
+   variable to configure the Azure data center to install the AKS cluster
+   into. The `version` and `nodevmsize` variables can be used to set
+   the Kubernetes and VM size of the nodes:
 
    ```bash
    name="<set me please>"
    location="EastUS"
+   version="1.10.5"
+   nodevmsize="Standard_D2s_v3"
    ```
 
    **Important: Please note this value and command down, because if your Cloud
@@ -152,7 +157,7 @@ able to use to access your containers and manage your cluster.
    cluster:
 
    ```bash
-   az aks create --name $name --resource-group $name-rgp --location $location --dns-name-prefix $name --generate-ssh-keys --node-count 2 --node-vm-size Standard_DS2_v3
+   az aks create --name $name --resource-group $name-rgp --location $location --dns-name-prefix $name --generate-ssh-keys --node-count 2 --node-vm-size $nodevmsize
    ```
 
    | Note: If you have an Azure Log Analytics workspace you'd like to
@@ -161,7 +166,7 @@ able to use to access your containers and manage your cluster.
 
    ```bash
    workspaceId="$(az resource list --resource-type Microsoft.OperationalInsights/workspaces --query '[0].id' --o tsv)"
-   az aks create --name $name --resource-group $name-rgp --location $location --dns-name-prefix $name --generate-ssh-keys --node-count 2 --node-vm-size Standard_D2s_v3 --workspace-resource-id $workspaceId --enable-addons monitoring --kubernetes-version 1.10.5
+   az aks create --name $name --resource-group $name-rgp --location $location --dns-name-prefix $name --generate-ssh-keys --node-count 2 --node-vm-size $nodevmsize --workspace-resource-id $workspaceId --enable-addons monitoring --kubernetes-version $version
    ```
 
 The AKS cluster will be created in your Azure subscription.
