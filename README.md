@@ -24,13 +24,12 @@ _Continuous Delivery Practice Lead, IAG NZ_
 - [What You Will Learn](#what-you-will-learn)
 - [Part 1 - Opening a Cloud Shell](#part-1---opening-a-cloud-shell) - 5 min
 - [Part 2 - Create an Azure Container Service](#part-2---create-the-azure-container-service) - 30 min
-- [Part 2a - Configure Health Monitoring](#part-2a---configure-health-monitoring) - 5 min
 - [Introduction to Containers, Docker and Kubernetes](#introduction-to-containers,-docker-and-kubernetes) - 30 min
 - [Part 3 - Manage Cluster with Cloud Shell](#part-3---manage-cluster-with-cloud-shell) - 5 min
 - [Part 4 - Configure Helm Tiller](#part-4---configure-helm-tiller) - 5 min
 - [Part 5 - Install Grafana using Helm](#part-5---install-grafana-using-helm) - 10 min
 - [Part 6 - Connect Grafana to Azure](#part-6---connect-grafana-to-azure) - 5 min
-- [Part 7 - Cleanup After the Workshop](#part-7---cleanup-after-the-workshop) - 5 min
+- [Part 8 - Cleanup After the Workshop](#part-8---cleanup-after-the-workshop) - 5 min
 
 Estimated workshop time: 90 min
 Estimated Azure credit usage: USD 3.00 (as long as you delete
@@ -136,6 +135,7 @@ able to use to access your containers and manage your cluster.
 
    ```bash
    name="<set me please>"
+   location="EastUS"
    ```
 
    **Important: Please note this value and command down, because if your Cloud
@@ -145,37 +145,29 @@ able to use to access your containers and manage your cluster.
 1. Run this command your Cloud Shell to create a resource group:
 
    ```bash
-   az group create --name $name-rgp --location EastUS
+   az group create --name $name-rgp --location $location
    ```
 
 1. Run this command in Cloud Shell to create a Azure Kubernetes Service
    cluster:
 
    ```bash
-   az aks create --name $name --resource-group $name-rgp --location EastUS --dns-name-prefix $name --generate-ssh-keys --node-count 2
+   az aks create --name $name --resource-group $name-rgp --location $location --dns-name-prefix $name --generate-ssh-keys --node-count 2 --node-vm-size Standard_DS2_v3
+   ```
+
+   | Note: If you have an Azure Log Analytics workspace you'd like to
+   configure your cluster to log to, you can include the `--workspace-resource-id`
+   and `--enable-addons monitoring` parameters in the create command:
+
+   ```bash
+   workspaceId="$(az resource list --resource-type Microsoft.OperationalInsights/workspaces --query '[0].id' --o tsv)"
+   az aks create --name $name --resource-group $name-rgp --location $location --dns-name-prefix $name --generate-ssh-keys --node-count 2 --node-vm-size Standard_D2s_v3 --workspace-resource-id $workspaceId --enable-addons monitoring --kubernetes-version 1.10.5
    ```
 
 The AKS cluster will be created in your Azure subscription.
 This will take at least 10 minutes to complete creation of the AKS.
 
 ![Create AKS](images/akscreate.png "Create AKS")
-
-## Part 2a - Configure Health Monitoring (Optional)
-
-Azure Kubernetes Service clusters can be hooked up to Azure Log Analytics
-(Azure Monitor) so that the health of the cluster can be monitored.
-
-This feature is currently in preview, so it can only be deployed by
-applying an ARM template to the AKS cluster resource group.
-This will require a Log Analytics workspace already configured.
-
-   ```bash
-   name="<set me please>"
-   workspaceId="$(az resource list --resource-type Microsoft.OperationalInsights/workspaces --query '[0].id' --o tsv)"
-   aksResourceId="$(az aks show --name $name --resource-group $name-rgp --query id --o tsv)"
-   wget https://gist.githubusercontent.com/PlagueHO/1c0b0ee8a5a6b2b0893c5ed0d74e4580/raw/7c91bfbb7f059a3992d9dc41965fee72716caa3f/deployaksloganalytics.json
-   az group deployment create --resource-group $name-rgp --template-file deployaksloganalytics.json --name 'deployanalytics' --parameters aksResourceId=$aksResourceId aksResourceLocation="East US" workspaceId=$workspaceId workspaceRegion="Australia Southeast"
-   ```
 
 ## Part 3 - Manage Cluster with Cloud Shell
 
@@ -241,14 +233,23 @@ we can't enable role based access (RBAC) control on. The Grafana Helm chart
 requires RBAC so we'll need to create a new Kubernetes _namespace_ called
 `tiller-world` to install it into.
 
+| Important: as of 2018-07-14, there is an issue with the way Azure deploys
+an AKS cluster with RBAC enabled. It is missing the `cluster-admin` role
+which _Helm_ assumes exists. To resolve this issue, create the `cluster-admin`
+role by running:
+
+   ```bash
+   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/cluster-admin.yaml
+   ```
+
 1. Initialize the Helm Tiller with role based access control enabled into
    a the `tiller-world` _namespace_ with:
 
    ```bash
    kubectl create namespace tiller-world
    kubectl create serviceaccount tiller --namespace tiller-world
-   kubectl create -f src\role-tiller.yaml
-   kubectl create -f src\rolebinding-tiller.yaml
+   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/role-tiller.yaml
+   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/rolebinding-tiller.yaml
    helm init --service-account tiller --tiller-namespace tiller-world
    ```
 
@@ -364,7 +365,22 @@ in Azure:
 If you're new to Grafana, then it is best to look through the Grafana
 [getting started guide](http://docs.grafana.org/guides/getting_started/).
 
-## Step 7 - Cleanup After the Workshop
+### Part 7 - Add Some More Workloads
+
+One of the most useful and powerful things about _AKS_ and _Kubernetes_
+in general is you can simply continue to add workloads (apps/services)
+to your cluster if you've got spare capacity on it. And of course
+you can continue to add _Nodes_ if you start to run low on capacity.
+
+Adding another workload to an existing cluster is simple with Helm.
+
+1. Add a Wordpress Application to your cluster:
+
+   ```bash
+   helm install stable/wordpress --tiller-namespace tiller-world
+   ```
+
+## Part 8 - Cleanup After the Workshop
 
 > This step is optional and only needs to be done if you're finished with your
 > cluster and want to get rid of it to save some Azure credit.
