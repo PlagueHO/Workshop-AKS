@@ -97,13 +97,13 @@ while Windows users can opt for PowerShell.
 
    ![Select Bash Cloud Shell](images/selectbashcloudshell.png "Select Bash Cloud Shell")
 
-## Part 2 - Create an Azure Container Service
+## Part 2 - Create an Azure Kubernetes Service
 
-We will now use the Cloud Shell to create a new Azure Container Service (ACS)
-Kubernetes cluster that will be used to host our containers.
+We will now use the Cloud Shell to create a new Azure Kubernetes Service (AKS)
+cluster that will be used to host our containers.
 
-Any ACS service you create will be publically accessible on the internet.
-A URL will be automatically assigned to your ACS service that you will be
+Any AKS service you create will be publically accessible on the internet.
+A URL will be automatically assigned to your AKS service that you will be
 able to use to access your containers and manage your cluster.
 
 1. Launch an **Cloud Shell** in the Azure Portal or as a standalone console:
@@ -198,18 +198,18 @@ and other software can use to control and monitor the cluster with. The FQDN
 for this endpoint can be located by selecting the AKS cluster resource in the
 resource group that we deployed to contain our cluster:
 
-![AKS Management FQDN](images/acsresourcemanagementfqdn.png "AKS Management FQDN")
+![AKS Management FQDN](images/aksresourcemanagementfqdn.png "AKS Management FQDN")
 
 We can then configure the `kubectl` tool to manage this cluster. We could do this
 manually, but the `Azure CLI` in Cloud Shell provides a handy way to do this for us.
 
-1. Configure your Cloud Shell to manage your ACS by running the command:
+1. Configure your Cloud Shell to manage your AKS by running the command:
 
    ```bash
    az aks get-credentials --resource-group $name-rgp --name $name
    ```
 
-   ![Configure Cloud Shell to manage AKS](images/configurecloudshellacs.png "Configure Cloud Shell to manage AKS")
+   ![Configure Cloud Shell to manage AKS](images/configurecloudshellaks.png "Configure Cloud Shell to manage AKS")
 
 1. Validate our cluster is running by running the command:
 
@@ -217,7 +217,7 @@ manually, but the `Azure CLI` in Cloud Shell provides a handy way to do this for
    kubectl cluster-info
    ```
 
-   ![Get Cluster Info](images/acsclusterinfo.png "Get Cluster Info")
+   ![Get Cluster Info](images/aksclusterinfo.png "Get Cluster Info")
 
 1. Check all nodes in the cluster by running the command:
 
@@ -231,6 +231,8 @@ If you are using the AZ CLI on a Windows machine with a compatible web
 browser you can use the AZ CLI to browse the cluster dashboard. This
 will start a small proxy service on your computer that will allow you
 to access the Cluster Dashboard.
+
+![Cluster Dashboard](images/aksdashboard.png "Cluster Dashboard")
 
 The Cluster Dashboard is a container called `kubernetes-dashboard` that
 runs inside the AKS on one of cluster nodes in the `kube-system` namespace.
@@ -411,7 +413,7 @@ completely delete the cluster. You will still pay for some components._
 1. Delete the cluster by running the following command in the Azure Cloud Shell:
 
    ```bash
-   az acs delete --resource-group $name-rgp --name $name --yes
+   az aks delete --resource-group $name-rgp --name $name --yes
    ```
 
 2. Delete the resource group by running this command in the Azure Cloud Shell:
@@ -420,16 +422,16 @@ completely delete the cluster. You will still pay for some components._
    az group delete --name $name-rgp --yes
    ```
 
-![Delete Cluster](images/acsdelete.png "Delete Cluster")
+![Delete Cluster](images/aksdelete.png "Delete Cluster")
 
 Everything will now be cleaned up and deleted and you won't be paying to run
-an ACS Kubernetes cluster.
+an AKS cluster.
 
 ![Congratulations](images/congratulations.png "Congratulations")
 
 **Well done!**
 You have taken your first steps into the amazingly powerful world of
-Containers, Kubernetes and Azure Container Service. This technology is
+Containers, Kubernetes and Azure Kubernetes Service. This technology is
 increadibly powerful and can allow your applications to run virtually
 anywhere and they will always run the same way.
 
