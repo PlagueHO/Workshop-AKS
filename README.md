@@ -225,6 +225,32 @@ manually, but the `Azure CLI` in Cloud Shell provides a handy way to do this for
    kubectl get nodes
    ```
 
+### Browse the Cluster Dashboard
+
+If you are using the AZ CLI on a Windows machine with a compatible web
+browser you can use the AZ CLI to browse the cluster dashboard. This
+will start a small proxy service on your computer that will allow you
+to access the Cluster Dashboard.
+
+The Cluster Dashboard is a container called `kubernetes-dashboard` that
+runs inside the AKS on one of cluster nodes in the `kube-system` namespace.
+
+| Note: This does not work on Azure Cloud Shell because it lacks a
+compatible web browser.
+
+1. To run the dashboard a `ClusterRole` has to be first added because we
+   enabled RBAC on the cluster.
+
+   ```bash
+   kubectl create -f https://raw.githubusercontent.com/PlagueHO/Workshop-AKS/master/src/helm/dashboard-clusterrole.yaml
+   ```
+
+1. To open the Cluster Dashboard:
+
+   ```bash
+   az aks browse --resource-group $name-rgp --name $name
+   ```
+
 ## Part 4 - Configure Helm Tiller
 
 Helm is essentially a package management system for Kubernetes. It makes
