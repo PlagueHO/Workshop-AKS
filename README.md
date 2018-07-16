@@ -300,9 +300,13 @@ Grafana service, such as the plugins to include.
    the Azure DNS Zone that was created for your AKS cluster:
 
    ```bash
-   helm install stable/grafana --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins=grafana-azure-monitor-datasource\,grafana-kubernetes-app,ingress.annotations.kubernetes\.io/ingress\.class=addon-http-application-routing"
+   dnsName=$(az aks show -n $name -g $name-rgp --query 'addonProfiles.httpApplicationRouting.config.HTTPApplicationRoutingZoneName' -o tsv)
+   helm install stable/grafana --set "service.type=LoadBalancer,persistence.enabled=true,persistence.size=10Gi,persistence.accessModes[0]=ReadWriteOnce,plugins=grafana-azure-monitor-datasource\,grafana-kubernetes-app,ingress.enabled=true,ingress.annotations.kubernetes\.io/ingress\.class=addon-http-application-routing,ingress.hosts[0]=grafana.$dnsName"
    ```
 
+   ![Create Grafana with DNS](images/aksgrafanawithdns.png "Create Grafana with DNS")
+
+   ![Grfana Created with DNS](images/aksgrafanacreatedwithdns.png "Grfana Created with DNS")
 
 1. Set a variable name from the name of the Grafana service that
    was started by helm:
