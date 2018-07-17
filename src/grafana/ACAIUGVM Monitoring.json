@@ -183,7 +183,7 @@
         }
       ],
       "thresholds": "",
-      "title": "ACAIUG Current CPU",
+      "title": "ACAIUGVM Current CPU",
       "transparent": true,
       "type": "singlestat",
       "valueFontSize": "80%",
@@ -594,6 +594,39 @@
       }
     },
     {
+      "alert": {
+        "conditions": [
+          {
+            "evaluator": {
+              "params": [
+                150
+              ],
+              "type": "gt"
+            },
+            "operator": {
+              "type": "and"
+            },
+            "query": {
+              "params": [
+                "A",
+                "5m",
+                "now"
+              ]
+            },
+            "reducer": {
+              "params": [],
+              "type": "avg"
+            },
+            "type": "query"
+          }
+        ],
+        "executionErrorState": "alerting",
+        "frequency": "60s",
+        "handler": 1,
+        "name": "ACAIUGVM Disk Operations alert",
+        "noDataState": "no_data",
+        "notifications": []
+      },
       "aliasColors": {},
       "bars": false,
       "dashLength": 10,
@@ -763,7 +796,15 @@
           "refId": "B"
         }
       ],
-      "thresholds": [],
+      "thresholds": [
+        {
+          "colorMode": "critical",
+          "fill": true,
+          "line": true,
+          "op": "gt",
+          "value": 150
+        }
+      ],
       "timeFrom": null,
       "timeShift": null,
       "title": "ACAIUGVM Disk Operations",
@@ -843,7 +884,7 @@
     ]
   },
   "timezone": "",
-  "title": "My Azure Dashboard",
+  "title": "ACAIUGVM Monitoring",
   "uid": "90HcDcOiz",
-  "version": 7
+  "version": 4
 }
