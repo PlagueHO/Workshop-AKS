@@ -415,6 +415,12 @@ Adding another workload to an existing cluster is simple with Helm.
    helm install stable/wordpress
    ```
 
+1. Scale up the Wordpress Front end:
+
+   ```bash
+   kubectl scale deployment azure-vote-front --replicas=3
+   ```
+
 1. Add a Redmine (Project Management) Application to your cluster:
 
    ```bash
