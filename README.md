@@ -415,10 +415,16 @@ Adding another workload to an existing cluster is simple with Helm.
    helm install stable/wordpress
    ```
 
-1. Scale up the Wordpress Front end:
+1. Scale up the Wordpress Deployment to have 2 replicas:
 
    ```bash
-   kubectl scale deployment azure-vote-front --replicas=3
+   kubectl scale deployment vehement-angelfish-wordpress --replicas=2
+   ```
+
+1. Configure Autoscaling for the Wordpress Deployment:
+
+   ```bash
+   kubectl autoscale deployment vehement-angelfish-wordpress --min=2 --max=4 --cpu-percent=80
    ```
 
 1. Add a Redmine (Project Management) Application to your cluster:
